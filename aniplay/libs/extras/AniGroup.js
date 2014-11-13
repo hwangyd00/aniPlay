@@ -86,7 +86,7 @@ define(function(require, exports, module) {
 			//currently delay,direction,timing are fixed values
 			this.set('action', Animate.create({
 				id : this.id,
-				delay: '0s',
+				delay: 0,
 				direction : 'normal',
 				timing : 'linear',
 				duration : p.duration,
@@ -160,8 +160,10 @@ define(function(require, exports, module) {
 			addToScene : function(scene){
 				scene.addChild(this);
 				//AniGroup element
-				makeAniGroupElement(scene, this.id);
-				this.set('dom', Dom.create({id:this.id}));
+				if(!dom.byId(this.id)) {
+					makeAniGroupElement(scene, this.id);
+					this.set('dom', Dom.create({id:this.id}));
+				}
 			},
 
 			repeater : null,
@@ -182,7 +184,11 @@ define(function(require, exports, module) {
 							that.currentTime = delta;
 							//console.log('timeupdate', that.currentTime);
 						}else{
-							that.currentTime = that.action.totalDuration;
+							if(that.action.infinite == true) {
+								that.currentTime = delta % that.action.totalDuration;
+							} else {
+								that.currentTime = that.action.totalDuration;
+							}
 						}
 						dom.dispatchEvent(that.dom.element, 
 							AniGroup.ANI_GROUP_TIME_UPDATE, {
@@ -215,7 +221,7 @@ define(function(require, exports, module) {
 				this.currentTimePaused = 0;
 			},
 
-			play : function(){
+			play : function(/*optional*/infinite){
 				var timelineState = {
 					0 : 'IS_NORMAL',
 					1 : 'IS_SET_TIME',
@@ -223,6 +229,10 @@ define(function(require, exports, module) {
 					3 : 'IS_DETECT_START'
 				};
 				console.log('\r\n<AniGroup> '+this.id+'.play(), this.action.state='+this.action.state+', timelineState='+timelineState[this.action.timelineState]);
+				
+				if(infinite != undefined && infinite != null) {
+					this.action.set('infinite', infinite);
+				}
 
 				//Is set by Current Time
 				if(this.action.timelineState===Animate.IS_SET_TIME){
@@ -293,6 +303,12 @@ define(function(require, exports, module) {
 				this.pausePairs();
 				this.pauseAction(this.action);
 				this.pauseRepeater(this.currentTime);
+				dom.dispatchEvent(this.dom.element,
+					AniGroup.ANI_GROUP_PAUSE, {
+						aniGroup:this,
+						aniGroupId:this.id,
+						animateId:this.action.id
+					}, true, true);
 			},
 			resume : function(){
 				console.log('<AniGroup> '+this.id+'.resume()');
@@ -474,7 +490,8 @@ define(function(require, exports, module) {
 			ANI_GROUP_ITERATION : 'aniGroupIteration',
 			ANI_GROUP_END : 'aniGroupEnd',
 			ANI_GROUP_STOP : 'aniGroupStop',
-			ANI_GROUP_TIME_UPDATE : 'aniGroupTimeUpdate'
+			ANI_GROUP_TIME_UPDATE : 'aniGroupTimeUpdate',
+			ANI_GROUP_PAUSE : 'aniGroupPause'
 		}
 	});
 

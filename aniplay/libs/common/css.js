@@ -88,26 +88,14 @@ define(function(require, exports, module) {
 			element.style[this.fixProp('animationDuration')] = prop.duration;
 			element.style[this.fixProp('animationDirection')] = prop.direction;
 			element.style[this.fixProp('animationTimingFunction')] = prop.timing;
-			element.style[this.fixProp('animationIterationCount')] = prop.iteration;
+			if(prop.infinite === true) {
+				element.style[this.fixProp('animationIterationCount')] = 'infinite';	
+			} else {
+				element.style[this.fixProp('animationIterationCount')] = prop.iteration;
+			}
 			element.style[this.fixProp('animationPlayState')] = 'running';
 			
 			//console.log(element.style[this.fixProp('animationName')]);
-		},
-		resetAnimation1 : function(element){
-			console.log('css.resetAnimation('+element.id+')');
-			try{
-				delete element.style[this.fixProp('animation')];
-				delete element.style[this.fixProp('animationName')];
-				delete element.style[this.fixProp('animationDelay')];
-				delete element.style[this.fixProp('animationFillMode')];
-				delete element.style[this.fixProp('animationDuration')];
-				delete element.style[this.fixProp('animationDirection')];
-				delete element.style[this.fixProp('animationTimingFunction')];
-				delete element.style[this.fixProp('animationIterationCount')];
-				//delete element.style[this.fixProp('animationPlayState')];
-			}catch(e){
-				console.log(e.message);
-			}
 		},
 		resetAnimation : function(element){
 			console.log('css.resetAnimation('+element.id+')');

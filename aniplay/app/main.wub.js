@@ -44,19 +44,14 @@ var AniPlay;
 		['proxy/wub/AniPlay'],
 		function(_AniPlay){
 
-			if(typeof ComingBridge!='undefined' && 
-				typeof ComingBridge.printLog =='function' &&
-				typeof console == 'object'){
-				console.log = ComingBridge.printLog;
-				console.warn = ComingBridge.printLog;
-			}
-
 			AniPlay = _AniPlay;
 			AniPlay.dom.dispatchEvent(window, 
 				AniPlay.ANI_PLAY_READY, AniPlay, true, true);
 			AniPlay.init();
 
 			if(typeof animator_cfg === 'object'){
+				
+				AniPlay.bindEvents(animator_cfg);
 
 				//AniPlay.loadPlayModel(animator_cfg);
 				//AniPlay.dom.addEvent(window, 'wubReady', function(){
