@@ -43,11 +43,14 @@ define(function(require, exports, module) {
 		extend : Action,
 		init : function(p){
 			Animate.super.init.apply(this, arguments);
-			this.set('delay', p.delay || '0s');
-			this.set('duration', p.duration || '0s');
+			this.set('delay', p.delay!=0? p.delay/1000+'s' : '0s');
+			this.set('duration', p.duration!=0? p.duration/1000+'s' : '0s');
 			this.set('iteration', p.iteration || 1);
 			if(this.iteration==='infinite'){
 				this.iteration = Number.MAX_VALUE/10000000;
+				this.set('infinite', true);
+			} else {
+				this.set('infinite', false);
 			}
 			this.set('direction', p.direction || 'normal');
 			this.set('fillmode', p.fillmode || 'forwards');
@@ -86,6 +89,7 @@ define(function(require, exports, module) {
 			delay : null,
 			duration : null,
 			iteration : null,
+			infinite : null,
 			direction : null,
 			fillmode : null,
 			timing : null,
@@ -131,6 +135,7 @@ define(function(require, exports, module) {
 					direction : this.direction,
 					timing : this.timing,
 					iteration : this.iteration,
+					infinite : this.infinite,
 					playState : 'running'
 				});
 			},
@@ -140,7 +145,9 @@ define(function(require, exports, module) {
 					this.beforeCss = this.endCss;
 				}
 				if(this.startCss){
-					this.setStyleByDiff(node.dom.element, this.startCss);
+					if(!(this.duration.indexOf("0s") > -1)) {
+						this.setStyleByDiff(node.dom.element, this.startCss);
+					}
 				}
 			},
 			runWith : function(node){
@@ -226,7 +233,9 @@ define(function(require, exports, module) {
 				if(this.holdEnd===true && this.target){
 					this.detectEndCss();
 					this.beforeCss = this.startCss;
-					this.setStyleByDiff(this.target.dom.element, this.endCss, true);
+					if(!(this.duration.indexOf("0s") > -1)) {
+						this.setStyleByDiff(this.target.dom.element, this.endCss, true);
+					}
 				}
 				this.unbindAnimation();
 				this.resetStates();
@@ -251,8 +260,8 @@ define(function(require, exports, module) {
 				console.log("<Animate> " + this.id + ".detectStartCss(" + node.id + ")");
                 var element = node.dom.element;
                 var clone = dom.byId('clone_'+element.id);
-				this.set("timelineState", Animate.IS_DETECT_START), 
-				this.set("target", node), 
+				this.set("timelineState", Animate.IS_DETECT_START);
+				this.set("target", node);
 				this.runWithDelay(clone, 0);
 			},
 			detectStartCss : function(node){
@@ -272,13 +281,14 @@ define(function(require, exports, module) {
                     direction : this.direction,
                     timing : this.timing,
                     iteration : this.iteration,
+                    infinite : this.infinite,
                     playState : 'pause'
                 });
 
                 //startStyle
                 var startCss = Animate.getCloneStyle(clone);
 				this.set('startCss', startCss);
-				//console.log(this.id+".startCss = ", this.startCss);
+				console.log(this.id+".startCss = ", this.startCss);
 				console.log(this.id+".startCss['-webkit-transform'] = "+this.startCss['-webkit-transform']);
 				console.log(logger.check(this.startCss,this.id+'.startCss'));
 
@@ -299,11 +309,23 @@ define(function(require, exports, module) {
                     //Reset Animation
                     css.resetAnimation(clone);
                     //fire onSetTime event
-                    dom.dispatchEvent(node.dom.element, 
-                        Animate.DETECT_START_CSS, {
-                            animate : animate,
-                            node : node
-                        },true,true);
+                    if(AniGroup.isIDE == true) {
+	                    if(typeof AniPlay.goToTime == 'undefined' || AniPlay.goToTime == 0) {
+                    		dom.dispatchEvent(node.dom.element, 
+	                        	Animate.DETECT_START_CSS, {
+    	                        	animate : animate,
+        	                    	node : node
+            	            	},true,true);	
+                	    }
+                    } else {
+                    	if(animate.justplay == true) {
+                    		dom.dispatchEvent(node.dom.element, 
+	                        Animate.DETECT_START_CSS, {
+    	                        animate : animate,
+        	                    node : node
+            	            },true,true);
+                    	}
+                    }
 
                 },0,clone,node,this);
 			},
@@ -339,7 +361,9 @@ define(function(require, exports, module) {
 				console.log('%c<Animate> '+this.id+'.goToStartFrameWith('+node.id+')', 'color:#4EE2EC');
 				var element = node.dom.element;
 				this.stopWith(node); //reset all
-				this.setStyleByDiff(element, this.startCss);
+				if(!(this.duration.indexOf("0s") > -1)) {
+					this.setStyleByDiff(element, this.startCss);
+				}
 			},
 			resumeTimeWith : function(node){
 				console.log('%c<Animate> '+this.id+'.resumeTimeWith('+node.id+')', 'color:blue');
@@ -396,11 +420,17 @@ define(function(require, exports, module) {
 
 				//start position
 				if(actualPos==0){
+					console.log("  ### actualPos == 0 ###\r\n");
 					this.unbindAnimation();
 					this.resetStates();
 				}else{
 					//pass under 0.1ms
 					if(delta <= 0.5 && !ignoreDelta){
+						Animate.dispatchSetTimeEvent(
+							element, 
+							'#'+element.id, //TODO modify to Selector (until 1st week of Oct) 
+							this.currentTime
+						);
 						console.log("  ### delta <= 0.1 && !ignoreDelta return ###\r\n");
 						return;
 					}
@@ -525,14 +555,14 @@ define(function(require, exports, module) {
 						var movedStyle = Animate.getCloneStyle(clone);
 
 						//TODO : check wheather things changed
-						var ch = dom.checkComputedStyleDiff(animate.originCss, movedStyle);
+//						var ch = dom.checkComputedStyleDiff(animate.originCss, movedStyle);
 //						var ch = true;
 //						if((animate.startCss.top === movedStyle.top)){
 //							ch=false;
 //						}
-						if(animate.currentTime > 0 && ch===false){
-							console.log('animate.originCss === movedStyle --> dom.setStyles() canceled');
-						}else{
+						// if(animate.currentTime < 0){
+							// console.log('animate.currentTime  < 0');
+						// }else{
 
 							/*
 							if(animate.startCss[css.fixInline('transform')] === movedStyle[css.fixInline('transform')){
@@ -548,13 +578,13 @@ define(function(require, exports, module) {
 							*/
 
 							//in a delay condition then apply startCss
-							if(animate.currentTime <= 0){
-								animate.setStyleByDiff(element, animate.startCss);
-							//apply new style to original
-							}else{
-								animate.setStyleByDiff(element, movedStyle);
-							}
+						if(animate.currentTime <= 0){
+							animate.setStyleByDiff(element, animate.startCss);
+						//apply new style to original
+						}else{
+							animate.setStyleByDiff(element, movedStyle);
 						}
+						// }
 
 						//Reset Animation
 						css.resetAnimation(clone);
@@ -568,14 +598,14 @@ define(function(require, exports, module) {
 						console.log(animate.target.id+' > '+JSON.stringify(animate.startCss));
 						 
 						setTimeout(function(animate) {
-							css.resetAnimation(animate), 
-							animate.set("target", null)
-						}, 1, animate), 
-						animate.set("timelineState", 0), 
+							css.resetAnimation(animate);
+							animate.set("target", null);
+						}, 1, animate);
+						animate.set("timelineState", 0); 
 						dom.dispatchEvent(element, Animate.DETECT_START_CSS, {
 							animate : animate,
 							node : node
-						}, true, true)
+						}, true, true);
 
 					//resumeTimeWith
 					}else if(animate.timelineState===Animate.IS_RESUME_TIME){
@@ -602,17 +632,19 @@ define(function(require, exports, module) {
 
 					//prevent stop event when setTime() is called.
 					if(animate.timelineState != Animate.IS_SET_TIME){
-						animate.handlers.end(animate);
+						if(!animate.infinite){
+							animate.handlers.end(animate);
+							
+							//detect end css
+							//animate.detectEndCss();
+
+							animate.set('state','stop');
+							animate.set('timelineState',0);
+							console.log(animate.id+'.state = '+animate.state);
+
+							console.log(animate.id, animate);
+						}
 					}
-
-					//detect end css
-					//animate.detectEndCss();
-
-					animate.set('state','stop');
-					animate.set('timelineState',0);
-					console.log(animate.id+'.state = '+animate.state);
-
-					console.log(animate.id, animate);
 				});
 			},
 			getCloneStyle : function(element){

@@ -73,6 +73,81 @@ define(function(require, exports, module) {
 				}
 			});
 		},
+		
+		bindEvents : function(config){
+			
+			console.log('bindEvents');
+			var i, j, k,
+				scenes, layers, shapes,
+				fn;
+
+			if(typeof jQuery =='undefined'){
+				console.log('return');
+				return;
+			}
+
+			if(typeof jQuery('body').live === 'function'){
+				fn='live';
+			}else{
+				fn='on';
+			}
+
+			var bindEvent = function(shape){
+				var events, eventName, handler, i;
+				//
+				if(shape.children){
+					for(i in shape.children){
+						bindEvent(shape.children[i]);
+					}
+				}
+				if(shape.events){
+					events = shape.events;
+					for(eventName in events){
+						for(i in events[eventName]){
+							handler = events[eventName][i];
+							
+							jQuery('#'+shape.id)[fn](eventName, function(oEvent){
+								logger.event(oEvent.target+' '+oEvent.type);
+								
+								setTimeout(function(handler){
+									if(handler.type==='AniGroup'){
+										var aniGroup = Registry.getObjectById(handler.target, 'AniGroup');
+										aniGroup[handler.act](handler.time);
+									}
+								},100,handler);
+							});
+						}
+					}
+				}
+			};
+			
+			if('scenes' in config){
+				scenes = config['scenes'];
+				for(i in scenes){
+
+					jQuery('#'+scenes[i].id).on('pageshow', function(event){
+						var pageId = jQuery(this).attr('id');
+						setTimeout(function(pageId){
+							logger.event('pageshow : '+pageId);
+							AniPlay.movie.loadSceneById(pageId);
+						},100,pageId);
+					});
+
+					bindEvent(scenes[i]);
+					if('layers' in scenes[i]){
+						layers = scenes[i]['layers'];
+						for(j in layers){
+							if('shapes' in layers[j]){
+								shapes = layers[j]['shapes'];
+								for(k in shapes){
+									bindEvent(shapes[k]);
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 
 		addWidget : function(id, containerId, animateId, angroupId, type){
 			this.movieManager.addWidget(id, containerId, angroupId, type);
@@ -145,11 +220,13 @@ define(function(require, exports, module) {
 
 		@method loadPlayModel
 		@example
-			AniPlay.loadPlayModel(animator_cfg);
+			AniPlay.loadPlayModel(animator_cfg, msec);
 		@param {Object} config configuration object (aka model).
+		@param {Integer} msec  The milisecond time to move.
 		**/
-		loadPlayModel : function(config){
+		loadPlayModel : function(config, mSec){
 			console.log('%c\r\nAniPlay.loadPlayModel(config)', consoleStyle);
+			console.log('mSec = ' + mSec);
 			//var scenario = this.convertToScenario(config);
 			var scenario = config;
 			var getLastChild = function(shapes){
@@ -172,6 +249,7 @@ define(function(require, exports, module) {
 			if(document.getElementById(lastChild.id)){
 				this.movieManager = MovieManager.create();
 				this.movie = this.movieManager.loadScenario(scenario);
+				this.goToTime = mSec;
 				setTimeout(function(that){
 
 					console.log('AniGroup.isIDE = '+AniGroup.isIDE);
@@ -358,10 +436,16 @@ define(function(require, exports, module) {
 			AniPlay.playAniGroups(scene1, [aniGroup1, aniGroup2]);
 		@param {Object} scene Scene instance.
 		@param {Array} aniGroups Array of AniGroup instances.
+		@param {boolean} infinite  Whether play infinitely or not.
 		**/
-		playAniGroups : function(scene, aniGroups){
+		playAniGroups : function(scene, aniGroups, infinite){
 			console.log('%cAniPlay.playAniGroups(<Scene> '+scene.id+', [aniGroups])', consoleStyle);
 			console.log('aniGroups',aniGroups);
+			
+			//stop running aniGroups
+			var runAniGroups = this.getGroupsByState(scene,'run');
+			this.stopAniGroups(scene, runAniGroups);
+			
 			var i,
 				check = {stop:0,pause:0,run:0};
 			for(i in aniGroups){
@@ -372,7 +456,7 @@ define(function(require, exports, module) {
 				//if all stopped or paused
 				if(check['pause']===0 || check['stop']===0){
 					for(i in aniGroups){
-						aniGroups[i].play();
+						aniGroups[i].play(infinite);
 					}
 				//if some groups are stopped,
 				//run `paused groups` only
@@ -380,7 +464,7 @@ define(function(require, exports, module) {
 					for(i in aniGroups){
 						if(aniGroups[i].action.state==='pause'){
 							console.log(aniGroups[i].id+'.action.state = '+aniGroups[i].action.state);
-							aniGroups[i].play();
+							aniGroups[i].play(infinite);
 						}
 					}
 				}
@@ -396,12 +480,13 @@ define(function(require, exports, module) {
 			AniPlay.playAniGroupsById('page1', ['Anim1', 'Anim2']);
 		@param {String} pageId page's id.
 		@param {Mixed} aniGroupIds The animation groups' ids.
+		@param {boolean} infinite  Whether play infinitely or not.
 		**/
-		playAniGroupsById : function(pageId, aniGroupIds){
+		playAniGroupsById : function(pageId, aniGroupIds, infinite){
 			console.log('AniPlay.playAniGroupsById('+pageId+', '+aniGroupIds+')');
 			var scene = Registry.getObjectById(pageId,'Scene');
 			var aniGroups = this.getGroupsById(aniGroupIds);
-			this.playAniGroups(scene, aniGroups);
+			this.playAniGroups(scene, aniGroups, infinite);
 		},
 
 		/**
@@ -776,7 +861,33 @@ define(function(require, exports, module) {
 				//{movie: Movie Node Object} 
 			});
 		**/
-		LOAD_PLAY_MODEL : 'loadPlayModel'
+		LOAD_PLAY_MODEL : 'loadPlayModel',
+
+		/**
+		Called when the new animation config loaded and detect css
+
+		@event LOAD_SCENE
+		@bubbles true
+		@value {String} 'loadScene'
+		@example
+			window.addEventListener(AniPlay.LOAD_SCENE, function(oEvent){
+				console.log(oEvent.bundle);
+				//{scene: Scene Node Object} 
+			});
+		**/		
+		LOAD_SCENE : 'loadScene',
+		
+		/**
+		Called when the aniGroup paused
+		@event ANI_GROUP_PAUSE
+		@bubbles true
+		@value {String} 'aniGroupPause'
+		@example
+			window.addEventListener(AniPlay.ANI_GROUP_PAUSE, function(oEvent){
+				console.log(oEvent.bundle);
+			});
+		**/		
+		ANI_GROUP_PAUSE : 'aniGroupPause'
 	};
 
 	AniPlay.dom.addEvent(document, AniPlay.ANI_GROUP_START, function(oEvent){

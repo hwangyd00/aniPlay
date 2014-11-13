@@ -368,6 +368,13 @@ These are set of facade functions of inner modules.</p>
                             </li>
                         
                             <li class="index-item event">
+                                <a href="#event_ANI_GROUP_PAUSE">ANI_GROUP_PAUSE</a>
+
+                                
+                                
+                            </li>
+                        
+                            <li class="index-item event">
                                 <a href="#event_ANI_GROUP_START">ANI_GROUP_START</a>
 
                                 
@@ -397,6 +404,13 @@ These are set of facade functions of inner modules.</p>
                         
                             <li class="index-item event">
                                 <a href="#event_LOAD_PLAY_MODEL">LOAD_PLAY_MODEL</a>
+
+                                
+                                
+                            </li>
+                        
+                            <li class="index-item event">
+                                <a href="#event_LOAD_SCENE">LOAD_SCENE</a>
 
                                 
                                 
@@ -1308,6 +1322,12 @@ AniPlay.goToStartFrame([&#39;Anim1&#39;, &#39;Anim2&#39;]);</code></pre>
                     
                 </li>
             
+                <li class="arg">
+                    
+                        <code>msec</code>
+                    
+                </li>
+            
             </ul><span class="paren">)</span>
         </div>
     
@@ -1370,6 +1390,22 @@ AniPlay.goToStartFrame([&#39;Anim1&#39;, &#39;Anim2&#39;]);</code></pre>
                     
                 </li>
             
+                <li class="param">
+                    
+                        <code class="param-name">msec</code>
+                        <span class="type">Integer</span>
+                    
+
+                    
+
+                    <div class="param-description">
+                        <p>The milisecond time to move.</p>
+
+                    </div>
+
+                    
+                </li>
+            
             </ul>
         </div>
     
@@ -1381,7 +1417,7 @@ AniPlay.goToStartFrame([&#39;Anim1&#39;, &#39;Anim2&#39;]);</code></pre>
             <h4>Example:</h4>
 
             <div class="example-content">
-                <pre class="code prettyprint"><code>AniPlay.loadPlayModel(animator_cfg);</code></pre>
+                <pre class="code prettyprint"><code>AniPlay.loadPlayModel(animator_cfg, msec);</code></pre>
 
             </div>
         </div>
@@ -1983,6 +2019,12 @@ AniPlay.pauseAniGroupsById(&#39;page1&#39;, [&#39;Anim1&#39;, &#39;Anim2&#39;]);
                     
                 </li>
             
+                <li class="arg">
+                    
+                        <code>infinite</code>
+                    
+                </li>
+            
             </ul><span class="paren">)</span>
         </div>
     
@@ -2061,6 +2103,22 @@ AniPlay.pauseAniGroupsById(&#39;page1&#39;, [&#39;Anim1&#39;, &#39;Anim2&#39;]);
                     
                 </li>
             
+                <li class="param">
+                    
+                        <code class="param-name">infinite</code>
+                        <span class="type">Boolean</span>
+                    
+
+                    
+
+                    <div class="param-description">
+                        <p>Whether play infinitely or not.</p>
+
+                    </div>
+
+                    
+                </li>
+            
             </ul>
         </div>
     
@@ -2096,6 +2154,12 @@ AniPlay.pauseAniGroupsById(&#39;page1&#39;, [&#39;Anim1&#39;, &#39;Anim2&#39;]);
                 <li class="arg">
                     
                         <code>aniGroupIds</code>
+                    
+                </li>
+            
+                <li class="arg">
+                    
+                        <code>infinite</code>
                     
                 </li>
             
@@ -2171,6 +2235,22 @@ AniPlay.pauseAniGroupsById(&#39;page1&#39;, [&#39;Anim1&#39;, &#39;Anim2&#39;]);
 
                     <div class="param-description">
                         <p>The animation groups&#39; ids.</p>
+
+                    </div>
+
+                    
+                </li>
+            
+                <li class="param">
+                    
+                        <code class="param-name">infinite</code>
+                        <span class="type">Boolean</span>
+                    
+
+                    
+
+                    <div class="param-description">
+                        <p>Whether play infinitely or not.</p>
 
                     </div>
 
@@ -3623,6 +3703,57 @@ This fire ANI_GROUP_DURATION_UPDATE event. See ANI_GROUP_DURATION_UPDATE.</p>
 </div>
 
                 
+                    <div id="event_ANI_GROUP_PAUSE" class="events item">
+    <h3 class="name"><code>ANI_GROUP_PAUSE</code></h3>
+    <span class="type"></span>
+
+    
+
+    
+
+    
+
+    
+
+    <div class="meta">
+        
+            
+                
+                <p>
+                
+            
+        
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="description">
+        <p>Called when the aniGroup paused</p>
+
+    </div>
+
+    
+
+
+    
+        <div class="example">
+            <h4>Example:</h4>
+
+            <div class="example-content">
+                <pre class="code prettyprint"><code>window.addEventListener(AniPlay.ANI_GROUP_PAUSE, function(oEvent){
+    console.log(oEvent.bundle);
+});</code></pre>
+
+            </div>
+        </div>
+    
+</div>
+
+                
                     <div id="event_ANI_GROUP_START" class="events item">
     <h3 class="name"><code>ANI_GROUP_START</code></h3>
     <span class="type"></span>
@@ -3919,6 +4050,58 @@ because of AMD issue (Require.js loads modules asynchronously).</p>
                 <pre class="code prettyprint"><code>window.addEventListener(AniPlay.LOAD_PLAY_MODEL, function(oEvent){
     console.log(oEvent.bundle);
     //{movie: Movie Node Object} 
+});</code></pre>
+
+            </div>
+        </div>
+    
+</div>
+
+                
+                    <div id="event_LOAD_SCENE" class="events item">
+    <h3 class="name"><code>LOAD_SCENE</code></h3>
+    <span class="type"></span>
+
+    
+
+    
+
+    
+
+    
+
+    <div class="meta">
+        
+            
+                
+                <p>
+                
+            
+        
+        
+        </p>
+
+        
+
+        
+    </div>
+
+    <div class="description">
+        <p>Called when the new animation config loaded and detect css</p>
+
+    </div>
+
+    
+
+
+    
+        <div class="example">
+            <h4>Example:</h4>
+
+            <div class="example-content">
+                <pre class="code prettyprint"><code>window.addEventListener(AniPlay.LOAD_SCENE, function(oEvent){
+    console.log(oEvent.bundle);
+    //{scene: Scene Node Object} 
 });</code></pre>
 
             </div>

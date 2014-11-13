@@ -169,7 +169,10 @@ define(function(require, exports, module) {
 					if(element.hasChildNodes()){
 						var child;
 						for(child=element.firstChild; child != null; child = child.nextSibling){
-							clone.appendChild(this.shadowNode(child, isRecursive));
+							var childCloneNode = this.shadowNode(child, isRecursive);
+							if(childCloneNode != null) {
+								clone.appendChild(childCloneNode);
+							}
 						}
 					}
 					break;
@@ -252,6 +255,26 @@ define(function(require, exports, module) {
 				element = element.offsetParent;
 			}
 			return result;
+		},
+		checkCSSRule : function(animate) {
+			var items = document.styleSheets;
+			for(var i = 0; i < items.length ; i++) {
+				var href = items[i].href;
+				if(href == null) {continue;}
+				if(typeof href === 'undefined'){continue;}
+				if(href.indexOf("animator.managed.css") > -1) {
+					var rules = items[i].cssRules;
+					for(var j = 0; j< rules.length; j++) {
+						var rule = rules[j];
+						if(rule instanceof CSSKeyframesRule) {
+							if(rule.name == animate.id) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
 		}
 	};
 

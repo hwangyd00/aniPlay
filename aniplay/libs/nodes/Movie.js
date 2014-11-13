@@ -77,6 +77,11 @@ define(function(require, exports, module) {
 				for(i in children){
 					if(children[i] instanceof AniGroup){
 						children[i].detectCss();
+						if(typeof AniPlay.goToTime != 'undefined' && AniPlay.goToTime > 0) {
+	                    	setTimeout(function(that) {
+	                    		that.setCurrentTime(AniPlay.goToTime);
+	                    	}, 100, children[i]);
+                    	}
 					}
 				}
 			}
